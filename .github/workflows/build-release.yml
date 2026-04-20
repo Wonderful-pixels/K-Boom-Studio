@@ -85,9 +85,13 @@ jobs:
           path: dist_out/**
           if-no-files-found: ignore
 
+      - name: Package artifact into zip
+        run: |
+          python -m zipfile -c k-boom-studio-${{ env.VERSION }}-${{ matrix.os }}.zip dist_out/*
+
       # Upload to GitHub Release (only on release)
       - name: Upload to release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist_out/**
+          files: k-boom-studio-${{ env.VERSION }}-${{ matrix.os }}.zip
