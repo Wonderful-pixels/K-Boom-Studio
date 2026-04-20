@@ -7,6 +7,9 @@ on:
     types: [created]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build on ${{ matrix.os }}
@@ -15,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: ${{ github.event_name == 'release' && fromJson('["ubuntu-latest","windows-latest","macos-latest"]') || fromJson('["windows-latest"]') }}
 
     defaults:
       run:
