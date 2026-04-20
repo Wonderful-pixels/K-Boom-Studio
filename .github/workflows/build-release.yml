@@ -1,0 +1,90 @@
+name: Build K-Boom-Studio
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Setup Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # Compute version
+      - name: Compute version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            VERSION="${{ github.event.release.tag_name }}"
+          else
+            VERSION="dev-$(git rev-parse --short HEAD)"
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      # Inject version into app
+      - name: Write version file
+        run: |
+          echo "__version__ = '${{ env.VERSION }}'" > kboom_version.py
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade cx_Freeze
+
+      # Build application
+      - name: Build application
+        run: |
+          if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
+            python setup.py bdist_mac
+          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            python setup.py bdist_msi
+          else
+            python setup.py build
+          fi
+
+      # Rename build output (optional but cleaner)
+      - name: Prepare artifact folder
+        run: |
+          mkdir -p dist_out
+          cp -r build/* dist_out/ || true
+
+      # Upload artifact (CI usage)
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: k-boom-studio-${{ env.VERSION }}-${{ matrix.os }}
+          path: dist_out/**
+          if-no-files-found: ignore
+
+      # Upload to GitHub Release (only on release)
+      - name: Upload to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist_out/**
