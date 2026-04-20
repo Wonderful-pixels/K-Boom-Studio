@@ -1,5 +1,4 @@
-"""K-Boom is an open-source utility software to manage your fireworks and your fireworks controllers, sequence them and play them in sync with music.
-It is compatible with FPP Multisync broadcast by default, but you can write custom backends to connect it to whatever you want"""
+"""K-Boom Studio is an open-source utility software to manage your fireworks and your fireworks controllers and sequence them using timecodes."""
 
 """And, yeah, I know this program is absolutely horrible and messy, but don't worry, I'll refactor in a million years"""
 
@@ -12,11 +11,6 @@ import json
 from kboom_config import *
 from functools import partial
 import threading
-
-#import wled as backend
-import firemaestro as backend
-
-import multisync as resync
 
 player=None
 
@@ -471,74 +465,6 @@ def create_sequence():
     sequence.pack(sequences_frame)
     sequences.append(sequence)
 
-def play_all():
-    "Render and play all sequences one by one"
-    showerror("NOPE !     Chuck testa", "This feature is not implemented yet")
-
-def remote_autoplay():
-    "Wait for a resync packet, start the sequence, then follow it as remote"
-    global player
-    start_resync()
-    stop_all()
-    player=render_sequence()
-    resync.started=False
-    while True:
-        if resync.started:
-            break
-        time.sleep(0.09)
-    player.playing_sequence=None
-    print("Start play thread")
-    player.play_thread()
-
-def stop_all():
-    "Stop the main play thread"
-    global player
-    if player:
-        player.stop()
-        player=None
-
-
-def toggle_output():
-    global OUTPUT_ENABLED
-    print(OUTPUT_ENABLED)
-    OUTPUT_ENABLED=not OUTPUT_ENABLED
-    if OUTPUT_ENABLED:
-        OUT_BTN.configure(background=ENABLED_OUT_COLOR)
-        OUT_BTN.configure(text="Disable Output")
-    else:
-        OUT_BTN.configure(background=DISABLED_OUT_COLOR)
-        OUT_BTN.configure(text="Enable Output")
-
-def start_backend():
-    global OUTPUT_ENABLED
-    # Start the backend
-    offline = False
-    if not backend.start():
-        # showerror("Backend error", "Cannot start FireMaestro backend. Likely issue is wrong network interface or wrong network. K-Boom will go into offline mode")
-        offline = True
-        OUTPUT_ENABLED = False
-    if not offline:
-        OUTPUT_ENABLED=True
-        OUT_BTN.configure(text="Disable Output", command=toggle_output(), background=ENABLED_OUT_COLOR)
-    else:
-        OUT_BTN.configure(text="Restart backend", command=start_backend, background=OFFLINE_COLOR)
-        MSG_LABEL.configure(text="Offline mode", background=OFFLINE_COLOR)
-
-def toggle_resync():
-    pass
-
-def start_resync():
-    global RESYNC_ENABLED
-    #Start the resync backend
-    outofsync=False
-    if not resync.start():
-        outofsync=True
-        RESYNC_ENABLED=False
-    if not outofsync:
-        RESYNC_ENABLED=True
-        SYNC_BTN.configure(text="Disable Auto Resync", command=toggle_resync, background=ENABLED_OUT_COLOR)
-    else:
-        SYNC_BTN.configure(text="Restart Resync Backend", command=start_resync, background=OFFLINE_COLOR)
 
 def generate_show_data():
     ctrl_data=[]
@@ -629,11 +555,7 @@ def open_show():
             data=json.load(f)
         load_show_data(data)
 
-def find_sequence(_id):
-    for sq in sequences:
-        if sq.id==_id:
-            return sq
-    return None
+
 
 tk=Tk()
 tk.title("K-Boom Studio")
