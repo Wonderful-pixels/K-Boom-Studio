@@ -2,7 +2,7 @@ import socket
 import struct
 import threading
 
-FPP_IP = ""
+FPP_IP = "0.0.0.0"
 FPP_PORT = 32320  # FPP MultiSync port
 last_sync=None
 started=False
@@ -20,6 +20,7 @@ def run_remote(sock):
 
     while True:
         data, addr = sock.recvfrom(2048)
+        print(data)
         if len(data) < 17:
             continue  # Too short to be valid
 
@@ -62,3 +63,8 @@ def resync(timecode, sequence):
 def start():
     start_remote()
     return True
+
+if __name__=="__main__":
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind((FPP_IP, FPP_PORT))
+    run_remote(sock)
