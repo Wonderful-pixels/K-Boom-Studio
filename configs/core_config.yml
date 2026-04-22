@@ -1,0 +1,5 @@
+server:
+  port: 4240
+
+player:
+  sqpath: "sequences/"

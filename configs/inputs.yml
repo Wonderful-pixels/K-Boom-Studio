@@ -1,0 +1,11 @@
+osc:
+  address: "0.0.0.0"
+  port: 4000
+
+multisync:
+  address: "0.0.0.0"
+  type: "broadcast"
+  port: 32320
+
+midi:
+  channel: 1
